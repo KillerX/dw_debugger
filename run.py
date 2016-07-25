@@ -97,9 +97,17 @@ class DbgShell(cmd.Cmd):
 	def do_st(self, args):
 		'Print stack trace for the thread'
 
+		if not self.thread_id:
+			print('No thread selected')
+			return
+
 		response = requests.get(URL + 'threads/' + self.thread_id, headers={'x-dw-client-id': CLIENTID}, auth=(USER, PASS), verify=False)
 
 		data = response.json()
+
+		if 'call_stack' not in data:
+			print('No call stack. Thread may be runing or be finished')
+			return
 
 		self.last_location = data['call_stack'][0]['location']
 
