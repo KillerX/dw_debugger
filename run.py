@@ -3,10 +3,16 @@ import cmd
 import requests
 from os import path
 from config import URL, USER, PASS, BASE_PATH
+from pygments import highlight
+from pygments.lexers.javascript import JavascriptLexer
+from pygments.formatters import Terminal256Formatter
+import prompt_toolkit
 
 requests.packages.urllib3.disable_warnings()
 
 CLIENTID = 'pydeb'
+jsLexer = JavascriptLexer()
+consoleFormatter = Terminal256Formatter(style='monokai')
 
 class DbgShell(cmd.Cmd):
 	"""DW debugger class"""
@@ -33,7 +39,7 @@ class DbgShell(cmd.Cmd):
 			payload = {'breakpoints': [{'line_number': self.last_location['line_number'], 'script_path': self.last_location['script_path']}]}
 		else:
 			payload = {'breakpoints': [{'line_number': int(args[1]), 'script_path': args[0]}]}
-		print(payload)
+
 		response = requests.post(URL + 'breakpoints', headers={'x-dw-client-id': CLIENTID}, auth=(USER, PASS), verify=False, json=payload)
 		if response.status_code == requests.codes.ok:
 			print('OK')
@@ -97,7 +103,7 @@ class DbgShell(cmd.Cmd):
 	def do_st(self, args):
 		'Print stack trace for the thread'
 
-		if not self.thread_id:
+		if not hasattr(self, 'thread_id') or not self.thread_id:
 			print('No thread selected')
 			return
 
@@ -138,12 +144,15 @@ def print_source(loc, pre, post):
 	fn = path.join(BASE_PATH, loc['script_path'][1:])
 
 	for i in range(start, loc['line_number']):
-		print('  {}'.format(linecache.getline(fn, i)))
+		code = '  {}'.format(linecache.getline(fn, i).strip('\n'))
+		print(highlight(code, jsLexer, consoleFormatter), end="")
 
-	print('> {}'.format(linecache.getline(fn, loc['line_number'])))
+	code = linecache.getline(fn, loc['line_number']).strip('\n')
+	print('> ' + highlight(code, JavascriptLexer(), Terminal256Formatter()), end="")
 
 	for i in range(loc['line_number'] + 1, loc['line_number'] + post):
-		print('  {}'.format(linecache.getline(fn, i)))
+		code = '  {}'.format(linecache.getline(fn, i).strip('\n'))
+		print(highlight(code, JavascriptLexer(), Terminal256Formatter()), end='')
 
 def parse(arg):
 	'Convert a series of zero or more numbers to an argument tuple'
