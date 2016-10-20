@@ -6,11 +6,11 @@ from config import URL, USER, PASS, BASE_PATH
 from pygments import highlight
 from pygments.lexers.javascript import JavascriptLexer
 from pygments.formatters import Terminal256Formatter
-import prompt_toolkit
-
 requests.packages.urllib3.disable_warnings()
 
-CLIENTID = 'pydeb'
+VERSION = '0.0.1'
+CLIENTID = 'pydeb-' + VERSION
+
 jsLexer = JavascriptLexer()
 consoleFormatter = Terminal256Formatter(style='monokai')
 
