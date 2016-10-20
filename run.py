@@ -6,6 +6,7 @@ from config import URL, USER, PASS, BASE_PATH
 from pygments import highlight
 from pygments.lexers.javascript import JavascriptLexer
 from pygments.formatters import Terminal256Formatter
+from urllib.parse import urlencode
 requests.packages.urllib3.disable_warnings()
 
 VERSION = '0.0.1'
@@ -100,6 +101,20 @@ class DbgShell(cmd.Cmd):
 		for var in data['object_members']:
 			print('{}: {} (Type: {})'.format(var['name'], var['value'], var['type']))
 
+	def do_va(self, args):
+		'Inspect a local variable'
+
+		query = urlencode({'object_path': args})
+		response = requests.get(URL + 'threads/{}/frames/{}/members?{}'.format(self.thread_id, 0, query), headers={'x-dw-client-id': CLIENTID}, auth=(USER, PASS), verify=False)
+		data = response.json()
+
+		if 'object_members' not in data:
+			print('No object members')
+			return
+
+		for var in data['object_members']:
+			print('{}: {} (Type: {})'.format(var['name'], var['value'], var['type']))
+
 	def do_st(self, args):
 		'Print stack trace for the thread'
 
@@ -135,9 +150,27 @@ class DbgShell(cmd.Cmd):
 		response = requests.post(URL + 'threads/{}/over'.format(self.thread_id), headers={'x-dw-client-id': CLIENTID}, auth=(USER, PASS), verify=False)
 		self.do_st(None)
 
+	def do_eval(self, args):
+		'Evaluate an expression'
+		data = {'expr': args};
+		query_params = urlencode(data)
+		response = requests.get(URL + 'threads/{}/frames/0/eval?{}'.format(self.thread_id, query_params), headers={'x-dw-client-id': CLIENTID}, auth=(USER, PASS), verify=False)
+
+		data = response.json()
+
+		print('Expression: {}'.format(data.expression))
+		print('Result: {}'.format(data.result))
+		print(response.json())
+
 	def do_q(self, arg):
 		'Exit'
 		return True
+
+	def version(self):
+		global VERSION
+		'Output the version'
+
+		print('Running DWPyDebugger: ' + VERSION)
 
 def print_source(loc, pre, post):
 	start = max(loc['line_number'] - pre, 0)
