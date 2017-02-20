@@ -162,6 +162,11 @@ class DbgShell(cmd.Cmd):
 		print('Result: {}'.format(data.result))
 		print(response.json())
 
+	def do_run(self, args):
+		response = requests.post(URL + 'threads/{}/resume'.format(self.thread_id), headers={'x-dw-client-id': CLIENTID}, auth=(USER, PASS), verify=False)
+		print(response)
+		print('Running')
+
 	def do_q(self, arg):
 		'Exit'
 		return True
