@@ -84,7 +84,6 @@ class DbgShell(cmd.Cmd):
 
 	def do_use(self, args):
 		'Set thread ID to use: USE <id>'
-
 		self.thread_id = args
 
 	def do_v(self, args):
@@ -157,6 +156,10 @@ class DbgShell(cmd.Cmd):
 		response = requests.get(URL + 'threads/{}/frames/0/eval?{}'.format(self.thread_id, query_params), headers={'x-dw-client-id': CLIENTID}, auth=(USER, PASS), verify=False)
 
 		data = response.json()
+
+		if 'expression' not in data:
+			print(data)
+			return
 
 		print('Expression: {}'.format(data.expression))
 		print('Result: {}'.format(data.result))
